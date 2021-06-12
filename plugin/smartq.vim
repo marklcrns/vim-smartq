@@ -15,8 +15,7 @@
 "     same buffer to be deleted.
 "   - Auto delete empty buffers (will close tabs and window splits).
 "   - Prevents from deleting buffer if modified.
-"   - Handles diff splits, closing all blob buffers and extra splits
-"     automatically.
+"   - Handles diff splits, closing all diff buffer windows automatically.
 "
 " Commands:
 "   :SmartQ
@@ -81,7 +80,7 @@ function! s:ShiftAllWindowsBufferPointingToBuffer(buffer)
         execute s:winnr . 'wincmd w | bnext'
         " Restore active window
         execute s:curWin . 'wincmd w'
-        s:winnr = bufwinnr(a:buffer)
+        let s:winnr = bufwinnr(a:buffer)
       endwhile
     endif
   endfor
@@ -94,13 +93,13 @@ function! s:CloseAllModifiableWin()
   if winnr('$') ># 1
     " Loop over window splits
     for _ in range(1, winnr('$'))
-      " Go to next window
-      silent execute "wincmd w"
       " Close window splits if not in filetype exclusions, is modifiable, or empty
       if (index(g:smartq_exclude_filetypes, &filetype) < 0 || &modifiable) && &ft ==# ''
         execute "silent! close"
         let s:splitsClosed += 1
       endif
+      " Go to next window
+      silent execute "wincmd w"
     endfor
     echo "splits closed " . s:splitsClosed
   endif
@@ -139,12 +138,12 @@ endfunction
 
 " Exits diff mode no matter where you are
 " Optional arg to close specific plugin blob buffer
-function! s:HandleDiffBlobBuffer()
+function! s:CloseDiffBuffers()
   " Loop over buffers
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
-      execute bufwinnr(bufNr) . 'wincmd w | q'
+      execute bufwinnr(bufNr) . 'wincmd w | bd'
     endif
   endfor
 endfunction
@@ -171,7 +170,7 @@ function! <SID>SmartQ()
     silent execute 'bw!'
     return
   elseif &diff
-    call s:HandleDiffBlobBuffer()
+    call s:CloseDiffBuffers()
     return
   elseif exists("#goyo")
     " Hacky workaround to delete buffer while in Goyo mode without exiting or
