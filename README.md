@@ -9,15 +9,15 @@ other types of buffer.
 
 Preserve splits across tabs
 
-![Preserve Splits](https://i.imgur.com/uKRWrjS.gifv)
+![Preserve Splits](https://i.imgur.com/uKRWrjS.gif)
 
 Goyo Integration
 
-![Goyo Integration](https://i.imgur.com/sB70XEK.gifv)
+![Goyo Integration](https://i.imgur.com/sB70XEK.gif)
 
 Close all diff buffers
 
-![Diff](https://i.imgur.com/qSTQfGl.gifv)
+![Diff](https://i.imgur.com/qSTQfGl.gif)
 
 Additional features
 
