@@ -21,7 +21,6 @@ Close all diff buffers
 
 Additional features
 
-- Auto delete empty buffers.
 - Close all splits in current tab when one empty buffer remaining with multiple
   splits.
 - Close terminal.
@@ -43,28 +42,45 @@ call dein#add('marklcrns/vim-smartq')
 ## Usage
 
 ```vim
-" Remap macro key to Q
-nnoremap Q q
-" Map SmartQ to q
-nnoremap q :SmartQ<cr>
+:SmartQ               " Smart quit
+:SmartQCloseSplits    " Wipe all empty buffers
+:SmartQWipeEmpty      " Close all splits excluding non-modifiable
+                      " buffers and g:smartq_exclude_filetypes
+```
+
+## Mappings
+
+```vim
+nmap <Plug>(smartq_smartq)         " :SmartQ
+nmap <Plug>(smartq_wipe_empty)     " :SmartQWipeEmpty
+nmap <Plug>(smartq_close_splits)   " :SmartQCloseSplits
 ```
 
 ## Customization
 
 ```vim
 " Default Settings
+" -----
 
-" Prevent SmartQ from quitting some filetypes
+" Remaps normal mode macro record q to Q, then assign q <Plug>(smartq_smartq)
+let g:smartq_default_mappings = 1
+
+" Excluded filetypes to disable SmartQ and to preserve windows when closing
+" splits on excluded buffers. Non-modifiable are preserved by default.
 let g:smartq_exclude_filetypes = [
-     \ 'vista', 'fern', 'NvimTree', 'Mundo', 'MundoDiff', 'minimap',
-     \ 'fugitive', 'gitcommit'
-     \ ]
-" Quit filetypes using :bd command
+      \ 'fugitive'
+      \ ]
+" Delete buffers using :bd command. Default for non-specified filetypes
 let g:smartq_bd_filetypes = [
-    \ 'git', 'gina-', 'qf'
-    \ ]
-" Quit filetypes using :q command
+      \ 'git', 'gina-', 'qf'
+      \ ]
+" Wipe buffers using :bw command. Wiped buffers are removed from jumplist
+let g:smartq_bw_filetypes = [
+      \ ''
+      \ ]
+" Quit buffers using :q command. Non-modifiable and readonly file uses :q
 let g:smartq_q_filetypes = [
-    \ 'gitcommit', 'diff'
-    \ ]
+      \ 'gitcommit'
+      \ ]
 ```
+
