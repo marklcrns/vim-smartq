@@ -11,7 +11,7 @@ Preserve splits across tabs
 
 ![Preserve Splits](https://i.imgur.com/uKRWrjS.gif)
 
-Goyo Integration
+[Goyo](https://github.com/junegunn/goyo.vim) Integration
 
 ![Goyo Integration](https://i.imgur.com/sB70XEK.gif)
 
