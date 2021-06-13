@@ -70,7 +70,7 @@ let g:smartq_default_mappings = 1
 let g:smartq_exclude_filetypes = [
       \ 'fugitive'
       \ ]
-" Delete buffers using :bd command. Default for non-specified filetypes
+" Delete buffers using :bd command. Default for unspecified filetypes
 let g:smartq_bd_filetypes = [
       \ 'git', 'gina-', 'qf'
       \ ]

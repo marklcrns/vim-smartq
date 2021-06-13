@@ -6,7 +6,7 @@ set cpo&vim
 let g:smartq_exclude_filetypes = [
       \ 'Mundo', 'MundoDiff', 'fugitive'
       \ ]
-" Delete buffers using :bd command. Default for non-specified filetypes
+" Delete buffers using :bd command. Default for unspecified filetypes
 let g:smartq_bd_filetypes = [
       \ 'git', 'gina-', 'qf'
       \ ]
