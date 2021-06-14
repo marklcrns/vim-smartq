@@ -49,6 +49,9 @@ call dein#add('marklcrns/vim-smartq')
                       " buffers and g:smartq_exclude_filetypes
 ```
 
+> Tip: SmartQ(!) accepts both buffer name and buffer number (see :buffers). Also
+> supports tab completion.
+
 ## Mappings
 
 ```vim
