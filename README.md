@@ -2,8 +2,8 @@
 
 Master key for quitting vim buffers.
 
-Sensibly close buffers with respect to alternate tabs and window splits, and
-other types of buffer.
+Exit/Delete buffer with respect to window splits and tabs, and other types of
+buffer.
 
 ## Features
 
@@ -41,12 +41,16 @@ call dein#add('marklcrns/vim-smartq')
 
 ## Usage
 
+Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
+`<Plug>(smartq_this)` and `<C-q>` to `<Plug>(smartq_this_force)`
+
 ```vim
 :SmartQ {buffer}      " Smart quit (optional buffer arg)
-:SmartQ! {buffer}     " Force smart quit (optional buffer arg)
-:SmartQCloseSplits    " Wipe all empty buffers
+:SmartQ! {buffer}     " Same as above but forced
 :SmartQWipeEmpty      " Close all splits excluding non-modifiable
                       " buffers and g:smartq_exclude_filetypes
+:SmartQWipeEmpty!     " Same as above but forced
+:SmartQCloseSplits    " Wipe all empty buffers
 ```
 
 > Tip: SmartQ(!) accepts both buffer name and buffer number (see :buffers). Also
