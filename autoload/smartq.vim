@@ -3,7 +3,6 @@
 " Description:
 "   Sensibly close buffers with respect to alternate tabs and window splits,
 "   and other types of buffer.
-"
 " Features:
 "   - Delete buffers with preserving tabs and window splits displaying the same
 "     buffer to be deleted.
@@ -13,25 +12,29 @@
 "   - Handles diff splits, closing all diff buffer windows automatically.
 "   - Goyo integration. Remain in Goyo tab when deleting buffers. Exists if only
 "     one buffer remains.
-"
-" Author:
-"   Mark Lucernas
-"   https://github.com/marklcrns
-"   2021-06-12
-"
 " Commands:
 "   :SmartQ
+"   :SmartQ!
 "   :SmartQCloseSplits
 "   :SmartQWipeEmpty
 "
+" Author:
+"   Mark Lucernas <https://github.com/marklcrns>
+" Date:
+"   2021-06-12
+" Licence:
+"   GPL3
+"
 " Credits:
-"   smartq#wipe_empty_buffers()
-"     - https://stackoverflow.com/a/10102604
 "   smartq#smartq()
 "     - https://github.com/cespare/vim-sbd
+"     - https://github.com/Asheq/close-buffers.vim
 "     - https://stackoverflow.com/a/29236158
 "     - https://superuser.com/questions/345520/vim-number-of-total-buffers
-"
+"   smartq#wipe_empty_buffers()
+"     - https://stackoverflow.com/a/10102604
+"   s:new_tmp_buf() and s:str_to_bufnr()
+"     - https://github.com/moll/vim-bbye/blob/master/plugin/bbye.vim
 
 if exists('g:smartq_loaded')
   finish
@@ -43,61 +46,83 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
-function! s:ShiftAllWindowsBufferPointingToBuffer(buffer)
-  " Loop through tabs
+function! s:shift_all_win_buf_pointing_to_cur_buf(buffer)
   for i in range(1, tabpagenr('$'))
     silent execute 'tabnext ' . i
     if winnr('$') ># 1
       " Store active window nr to restore later
-      let s:curWin = winnr()
-
+      let curWin = winnr()
       " Loop over windows pointing to curBuf
-      let s:winnr = bufwinnr(a:buffer)
-      while (s:winnr >= 0)
+      let winnr = bufwinnr(a:buffer)
+      while (winnr >= 0)
         " Go to window and switch to next buffer
-        silent execute s:winnr . 'wincmd w | bnext'
+        silent execute winnr . 'wincmd w | bnext'
         " Restore active window
-        silent execute s:curWin . 'wincmd w'
-        let s:winnr = bufwinnr(a:buffer)
+        silent execute curWin . 'wincmd w'
+        let winnr = bufwinnr(a:buffer)
       endwhile
     endif
   endfor
 endfunction
 
 
-function! s:DeleteBufPreservingSplit(bufNr, bufDeleteCmd)
-  let s:curTabNr = tabpagenr()
+function! s:str_to_bufnr(buffer)
+  if empty(a:buffer)                " Current buffer
+    return bufnr("%")
+  elseif a:buffer =~# '^\d\+$'      " Str bufnr to bufnr
+    return bufnr(str2nr(a:buffer))
+  else                              " Bufname to bufnr
+    return bufnr(a:buffer)
+  endif
+endfunction
+
+
+function! s:new_tmp_buf(bang)
+  silent execute 'enew' . a:bang
+  setl noswapfile
+  " If empty and out of sight, delete it right away
+  setl bufhidden=wipe
+  " Regular buftype warns people if they have unsaved text there
+  setl buftype=
+  " Hide the buffer from buffer explorers and tabbars
+  setl nobuflisted
+endfunction
+
+
+function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
+  let curTabNr = tabpagenr()
+  let command = a:bufDeleteCmd . a:bang
 
   " Store listed buffers count
-  let s:curBufCount = len(getbufinfo({'buflisted':1}))
+  let bufCount = len(getbufinfo({'buflisted':1}))
 
-  if s:curBufCount ># 1
+  if bufCount ># 1
     " Prevent tabs and windows from closing if pointing to the same curBuf
     " by switching to next buffer before deleting curBuf
-    call s:ShiftAllWindowsBufferPointingToBuffer(a:bufNr)
+    call s:shift_all_win_buf_pointing_to_cur_buf(a:bufNr)
 
     " Close buffer and restore active tab
-    execute a:bufDeleteCmd . a:bufNr
-    silent execute 'tabn ' . s:curTabNr
+    execute command . a:bufNr
+    silent execute 'tabn ' . curTabNr
     " Create blank buffer if ended up with unmodifiable buffer
     if !&modifiable
-      silent execute 'enew'
+      silent execute 'enew' . a:bang
     endif
   else
     " Create new buffer empty if no splits and delete curBuf
-    silent execute 'enew'
-    call s:ShiftAllWindowsBufferPointingToBuffer(a:bufNr)
-    execute a:bufNr . a:bufDeleteCmd
+    silent execute 'enew' . a:bang
+    call s:shift_all_win_buf_pointing_to_cur_buf(a:bufNr)
+    execute a:bufNr . command
   endif
 endfunction
 
 
 " Quit all diff buffers
-function! s:CloseDiffBuffers()
+function! s:close_diff_bufs(bang)
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
-      silent execute bufwinnr(bufNr) . 'wincmd w | bd'
+      silent execute bufwinnr(bufNr) . 'wincmd w | ' . 'bd' . a:bang
     endif
   endfor
 endfunction
@@ -105,114 +130,114 @@ endfunction
 
 " Hacky workaround to delete buffer while in Goyo mode without exiting or
 " to turn off Goyo mode when only one buffer exists
-function! s:CloseGoyoBuffer()
-  if s:curBufCount ># 1
-    silent execute 'bn | bd#'
+function! s:delete_goyo_buf(bang)
+  let bufCount = len(getbufinfo({'buflisted':1}))
+  if bufCount ># 1
+    silent execute 'bn | ' . 'bd' . a:bang . '#'
   else
-    silent execute 'q | bn'
-    call smartq#wipe_empty_buffers()
+    silent execute 'q' . a:bang . ' | bn'
+    call smartq#wipe_empty_buffers('!')
   endif
 endfunction
 
 
-function! s:CountAllModifiableSplitsWithExclusion()
-  let s:splits = 0
+function! s:count_all_modifiable_splits_with_exclusion()
+  let splitsCount = 0
   if winnr('$') ># 1
     for _ in range(1, winnr('$'))
       if index(g:smartq_exclude_filetypes, &filetype) < 0 && &modifiable
-        let s:splits += 1
+        let splitsCount += 1
       endif
       silent execute "wincmd w"
     endfor
-    return s:splits
+    return splitsCount
   endif
 
   return 1
 endfunction
 
 
-function! smartq#wipe_empty_buffers() abort
-  let buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val)<0 && !getbufvar(v:val, "&mod")')
-  if !empty(buffers)
-    " Wipe all empty buffers
-    silent execute 'bw! ' . join(buffers, ' ')
+function! smartq#wipe_empty_buffers(bang) abort
+  let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val)<0 && !getbufvar(v:val, "&mod")')
+  if !empty(emtpyBufs)
+    silent execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
   endif
 endfunction
 
 
 " Close all modifiable splits excluding given filetype list
 function! smartq#close_all_modifiable_splits() abort
-  let s:splitsClosed = 0
-  if s:CountAllModifiableSplitsWithExclusion() ># 1
+  let splitsClosed = 0
+  if s:count_all_modifiable_splits_with_exclusion() ># 1
     for _ in range(1, winnr('$') - 1)
       if index(g:smartq_exclude_filetypes, &filetype) < 0 && &modifiable
         silent execute "close!"
-        let s:splitsClosed += 1
+        let splitsClosed += 1
       endif
       silent execute "wincmd w"
     endfor
-    return s:splitsClosed
+    return splitsClosed
   endif
 endfunction
 
 
-function! smartq#smartq() abort
+function! smartq#smartq(bang, buffer) abort
   " Exit if filetype excluded
   if index(g:smartq_exclude_filetypes, &filetype) >= 0
     return
   endif
 
-  let s:curBufNr = bufnr('%')
-  let s:curBufName = bufname('%')
-  let s:curTabNr = tabpagenr()
+  let bufNr = s:str_to_bufnr(a:buffer)
+  let bufName = bufname(bufNr)
+  let curTabNr = tabpagenr()
 
-  if getbufvar(s:curBufNr, '&modified') == 1
-    echohl WarningMsg | echo "Changes detected. Please save your file(s)" | echohl None
+  if getbufvar(bufNr, '&modified') == 1 && empty(a:bang)
+    echohl WarningMsg | echo "Changes detected. Please save your file(s) (add ! to override)" | echohl None
     return
   endif
 
-  let s:bdFiletypes = join(g:smartq_bd_filetypes, '\|')
-  let s:bwFiletypes = join(g:smartq_bw_filetypes, '\|')
-  let s:qFiletypes = join(g:smartq_q_filetypes, '\|')
+  let bdFiletypes = join(g:smartq_bd_filetypes, '\|')
+  let bwFiletypes = join(g:smartq_bw_filetypes, '\|')
+  let qFiletypes = join(g:smartq_q_filetypes, '\|')
 
-  let s:splitCount = s:CountAllModifiableSplitsWithExclusion()
+  let splitCount = s:count_all_modifiable_splits_with_exclusion()
 
   " Store listed buffers count
-  let s:curBufCount = len(getbufinfo({'buflisted':1}))
+  let bufCount = len(getbufinfo({'buflisted':1}))
 
   if &buftype ==# 'terminal'
     silent execute 'bw!'
 
   elseif &diff
-    call s:CloseDiffBuffers()
+    call s:close_diff_bufs(a:bang)
 
   elseif exists("#goyo")
-    call s:CloseGoyoBuffer()
+    call s:delete_goyo_buf(a:bang)
 
-  elseif s:splitCount ># 1 && s:curBufCount ==# 1 && s:curBufName ==# ''
+  elseif splitCount ># 1 && bufCount ==# 1 && bufName ==# ''
     call smartq#close_all_modifiable_splits()
 
-  elseif s:splitCount ==# 1 && s:curBufCount ==# 1 && s:curBufName ==# ''
-    silent execute 'q'
+  elseif splitCount ==# 1 && bufCount ==# 1 && bufName ==# ''
+    silent execute 'q' . a:bang
 
-  elseif s:splitCount ==# 1 && tabpagenr('$') > 1
-    if s:bwFiletypes =~ &filetype
-      execute 'bw' . s:curBufNr
+  elseif splitCount ==# 1 && tabpagenr('$') > 1
+    if bwFiletypes =~ &filetype
+      execute 'bw' . a:bang . bufNr
     else
-      execute 'bd' . s:curBufNr
+      execute 'bd' . a:bang . bufNr
     endif
 
-  elseif s:bdFiletypes =~ &filetype
-    call s:DeleteBufPreservingSplit(s:curBufNr, 'bd')
+  elseif bdFiletypes =~ &filetype
+    call s:delete_buf_preserve_split(bufNr, 'bd', a:bang)
 
-  elseif s:bwFiletypes =~ &filetype
-    call s:DeleteBufPreservingSplit(s:curBufNr, 'bw')
+  elseif bwFiletypes =~ &filetype
+    call s:delete_buf_preserve_split(bufNr, 'bw', a:bang)
 
-  elseif s:qFiletypes =~ &filetype || (!&modifiable || &readonly)
-    silent execute 'q'
+  elseif qFiletypes =~ &filetype || ((!&modifiable || &readonly) && bufName ==# '')
+    silent execute 'q' . a:bang
 
   else
-    call s:DeleteBufPreservingSplit(s:curBufNr, 'bd')
+    call s:delete_buf_preserve_split(bufNr, 'bd', a:bang)
 
   endif
 endfunction

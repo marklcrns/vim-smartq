@@ -42,7 +42,8 @@ call dein#add('marklcrns/vim-smartq')
 ## Usage
 
 ```vim
-:SmartQ               " Smart quit
+:SmartQ {buffer}      " Smart quit (optional buffer arg)
+:SmartQ! {buffer}     " Force smart quit (optional buffer arg)
 :SmartQCloseSplits    " Wipe all empty buffers
 :SmartQWipeEmpty      " Close all splits excluding non-modifiable
                       " buffers and g:smartq_exclude_filetypes
@@ -51,7 +52,8 @@ call dein#add('marklcrns/vim-smartq')
 ## Mappings
 
 ```vim
-nmap <Plug>(smartq_smartq)         " :SmartQ
+nmap <Plug>(smartq_this)           " :SmartQ
+nmap <Plug>(smartq_this_force)     " :SmartQ!
 nmap <Plug>(smartq_wipe_empty)     " :SmartQWipeEmpty
 nmap <Plug>(smartq_close_splits)   " :SmartQCloseSplits
 ```
@@ -62,7 +64,11 @@ nmap <Plug>(smartq_close_splits)   " :SmartQCloseSplits
 " Default Settings
 " -----
 
-" Remaps normal mode macro record q to Q, then assign q <Plug>(smartq_smartq)
+" Default mappings:
+" Remaps normal mode macro record q to Q
+" nnoremap Q q
+" nmap q        <Plug>(smartq_this)
+" nmap <C-q>    <Plug>(smartq_this_force)
 let g:smartq_default_mappings = 1
 
 " Excluded filetypes to disable SmartQ and to preserve windows when closing
@@ -83,4 +89,10 @@ let g:smartq_q_filetypes = [
       \ 'gitcommit'
       \ ]
 ```
+
+## Credits
+
+- [cespare/vim-sbd](https://github.com/cespare/vim-sbd)
+- [moll/vim-bbye](https://github.com/moll/vim-bbye)
+- [Asheq/close-buffers.vim](https://github.com/Asheq/close-buffers.vim)
 
