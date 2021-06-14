@@ -89,7 +89,7 @@ endfunction
 
 function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
   let curTabNr = tabpagenr()
-  let command = a:bufDeleteCmd . a:bang
+  let command = a:bufDeleteCmd . a:bang . ' '
 
   " Store listed buffers count
   let bufCount = len(getbufinfo({'buflisted':1}))
@@ -107,9 +107,6 @@ function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
       call s:new_tmp_buf('!')
     endif
   else
-    " Create new buffer empty if no splits and delete curBuf
-    call s:new_tmp_buf(a:bang)
-    call s:shift_all_win_buf_pointing_to_cur_buf(a:bufNr)
     execute command . a:bufNr
   endif
 endfunction
