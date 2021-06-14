@@ -47,10 +47,10 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 ```vim
 :SmartQ {buffer}      " Smart quit (optional buffer arg)
 :SmartQ! {buffer}     " Same as above but forced
-:SmartQWipeEmpty      " Close all splits excluding non-modifiable
-                      " buffers and g:smartq_exclude_filetypes
+:SmartQWipeEmpty      " Wipe all empty (untitled) buffers
 :SmartQWipeEmpty!     " Same as above but forced
-:SmartQCloseSplits    " Wipe all empty buffers
+:SmartQCloseSplits    " Close all splits excluding non-modifiable
+                      " buffers and g:smartq_exclude_filetypes
 ```
 
 > Tip: SmartQ(!) accepts both buffer name and buffer number (see :buffers). Also
