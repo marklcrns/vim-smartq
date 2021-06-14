@@ -78,14 +78,12 @@ endfunction
 
 
 function! s:new_tmp_buf(bang)
-  silent execute 'enew' . a:bang
+  execute 'enew' . a:bang
   setl noswapfile
   " If empty and out of sight, delete it right away
   setl bufhidden=wipe
   " Regular buftype warns people if they have unsaved text there
   setl buftype=
-  " Hide the buffer from buffer explorers and tabbars
-  setl nobuflisted
 endfunction
 
 
@@ -106,23 +104,23 @@ function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
     silent execute 'tabn ' . curTabNr
     " Create blank buffer if ended up with unmodifiable buffer
     if !&modifiable
-      silent execute 'enew' . a:bang
+      call s:new_tmp_buf('!')
     endif
   else
     " Create new buffer empty if no splits and delete curBuf
-    silent execute 'enew' . a:bang
+    call s:new_tmp_buf(a:bang)
     call s:shift_all_win_buf_pointing_to_cur_buf(a:bufNr)
-    execute a:bufNr . command
+    execute command . a:bufNr
   endif
 endfunction
 
 
 " Quit all diff buffers
-function! s:close_diff_bufs(bang)
+function! s:close_diff_bufs(bang) abort
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
-      silent execute bufwinnr(bufNr) . 'wincmd w | ' . 'bd' . a:bang
+      execute bufwinnr(bufNr) . 'wincmd w | ' . 'bd' . a:bang
     endif
   endfor
 endfunction
@@ -130,12 +128,12 @@ endfunction
 
 " Hacky workaround to delete buffer while in Goyo mode without exiting or
 " to turn off Goyo mode when only one buffer exists
-function! s:delete_goyo_buf(bang)
+function! s:delete_goyo_buf(bang) abort
   let bufCount = len(getbufinfo({'buflisted':1}))
   if bufCount ># 1
-    silent execute 'bn | ' . 'bd' . a:bang . '#'
+    execute 'bn | ' . 'bd' . a:bang . '#'
   else
-    silent execute 'q' . a:bang . ' | bn'
+    execute 'q' . a:bang . ' | bn'
     call smartq#wipe_empty_buffers('!')
   endif
 endfunction
@@ -157,16 +155,16 @@ function! s:count_all_modifiable_splits_with_exclusion()
 endfunction
 
 
-function! smartq#wipe_empty_buffers(bang) abort
-  let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val)<0 && !getbufvar(v:val, "&mod")')
+function! smartq#wipe_empty_buffers(bang)
+  let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) > 0')
   if !empty(emtpyBufs)
-    silent execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
+    execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
   endif
 endfunction
 
 
 " Close all modifiable splits excluding given filetype list
-function! smartq#close_all_modifiable_splits() abort
+function! smartq#close_all_modifiable_splits()
   let splitsClosed = 0
   if s:count_all_modifiable_splits_with_exclusion() ># 1
     for _ in range(1, winnr('$') - 1)
@@ -191,15 +189,15 @@ function! smartq#smartq(bang, buffer) abort
   let bufName = bufname(bufNr)
   let curTabNr = tabpagenr()
 
-  if getbufvar(bufNr, '&modified') == 1 && empty(a:bang)
+  if getbufvar(bufNr, '&modified') == 1 && &confirm ==# 0 && empty(a:bang)
     echohl WarningMsg | echo "Changes detected. Please save your file(s) (add ! to override)" | echohl None
     return
   endif
 
+  let splitCount = s:count_all_modifiable_splits_with_exclusion()
+
   let qFiletypes = join(g:smartq_q_filetypes, '\|')
   let bwFiletypes = join(g:smartq_bw_filetypes, '\|')
-
-  let splitCount = s:count_all_modifiable_splits_with_exclusion()
 
   " Store listed buffers count
   let bufCount = len(getbufinfo({'buflisted':1}))
@@ -213,14 +211,18 @@ function! smartq#smartq(bang, buffer) abort
   elseif exists("#goyo")
     call s:delete_goyo_buf(a:bang)
 
-  elseif splitCount ># 1 && bufCount ==# 1 && bufName ==# ''
+  elseif splitCount ># 1
+        \ && bufCount ==# 1 && bufName ==# ''
     call smartq#close_all_modifiable_splits()
 
-  elseif splitCount ==# 1 && bufCount ==# 1 && bufName ==# ''
-    silent execute 'q' . a:bang
+  elseif splitCount ==# 1
+        \ && bufCount ==# 1 && bufName ==# ''
+    execute 'q' . a:bang
 
-  elseif qFiletypes =~ &filetype || ((!&modifiable || &readonly) && bufName ==# '')
-    silent execute 'q' . a:bang
+  elseif qFiletypes =~ &filetype
+        \ && !(bufName ==# '' && bufCount ># 1)
+        \ || !&modifiable || &readonly
+    execute 'q' . a:bang
 
   elseif splitCount ==# 1 && tabpagenr('$') > 1
     if bwFiletypes =~ &filetype
