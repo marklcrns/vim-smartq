@@ -83,17 +83,14 @@ let g:smartq_default_mappings = 1
 let g:smartq_exclude_filetypes = [
       \ 'fugitive'
       \ ]
-" Delete buffers using :bd command. Default for unspecified filetypes
-let g:smartq_bd_filetypes = [
-      \ 'git', 'gina-', 'qf'
-      \ ]
-" Wipe buffers using :bw command. Wiped buffers are removed from jumplist
-let g:smartq_bw_filetypes = [
-      \ ''
-      \ ]
 " Quit buffers using :q command. Non-modifiable and readonly file uses :q
 let g:smartq_q_filetypes = [
-      \ 'gitcommit'
+      \ 'git', 'gina-status', 'gina-commit', 'diff'
+      \ ]
+" Wipe buffers using :bw command. Wiped buffers are removed from jumplist
+" Default :bd
+let g:smartq_bw_filetypes = [
+      \ ''
       \ ]
 ```
 

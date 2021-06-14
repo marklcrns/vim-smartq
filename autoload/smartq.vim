@@ -41,7 +41,6 @@ if exists('g:smartq_loaded')
 endif
 let g:smartq_loaded = 1
 
-
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -196,9 +195,8 @@ function! smartq#smartq(bang, buffer) abort
     return
   endif
 
-  let bdFiletypes = join(g:smartq_bd_filetypes, '\|')
-  let bwFiletypes = join(g:smartq_bw_filetypes, '\|')
   let qFiletypes = join(g:smartq_q_filetypes, '\|')
+  let bwFiletypes = join(g:smartq_bw_filetypes, '\|')
 
   let splitCount = s:count_all_modifiable_splits_with_exclusion()
 
@@ -220,6 +218,9 @@ function! smartq#smartq(bang, buffer) abort
   elseif splitCount ==# 1 && bufCount ==# 1 && bufName ==# ''
     silent execute 'q' . a:bang
 
+  elseif qFiletypes =~ &filetype || ((!&modifiable || &readonly) && bufName ==# '')
+    silent execute 'q' . a:bang
+
   elseif splitCount ==# 1 && tabpagenr('$') > 1
     if bwFiletypes =~ &filetype
       execute 'bw' . a:bang . bufNr
@@ -227,14 +228,8 @@ function! smartq#smartq(bang, buffer) abort
       execute 'bd' . a:bang . bufNr
     endif
 
-  elseif bdFiletypes =~ &filetype
-    call s:delete_buf_preserve_split(bufNr, 'bd', a:bang)
-
   elseif bwFiletypes =~ &filetype
     call s:delete_buf_preserve_split(bufNr, 'bw', a:bang)
-
-  elseif qFiletypes =~ &filetype || ((!&modifiable || &readonly) && bufName ==# '')
-    silent execute 'q' . a:bang
 
   else
     call s:delete_buf_preserve_split(bufNr, 'bd', a:bang)
