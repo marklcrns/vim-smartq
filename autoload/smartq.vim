@@ -46,7 +46,7 @@ set cpo&vim
 function! s:ShiftAllWindowsBufferPointingToBuffer(buffer)
   " Loop through tabs
   for i in range(1, tabpagenr('$'))
-    execute 'tabnext ' . i
+    silent execute 'tabnext ' . i
     if winnr('$') ># 1
       " Store active window nr to restore later
       let s:curWin = winnr()
@@ -55,9 +55,9 @@ function! s:ShiftAllWindowsBufferPointingToBuffer(buffer)
       let s:winnr = bufwinnr(a:buffer)
       while (s:winnr >= 0)
         " Go to window and switch to next buffer
-        execute s:winnr . 'wincmd w | bnext'
+        silent execute s:winnr . 'wincmd w | bnext'
         " Restore active window
-        execute s:curWin . 'wincmd w'
+        silent execute s:curWin . 'wincmd w'
         let s:winnr = bufwinnr(a:buffer)
       endwhile
     endif
@@ -77,7 +77,7 @@ function! s:DeleteBufPreservingSplit(bufNr, bufDeleteCmd)
     call s:ShiftAllWindowsBufferPointingToBuffer(a:bufNr)
 
     " Close buffer and restore active tab
-    silent execute a:bufDeleteCmd . a:bufNr
+    execute a:bufDeleteCmd . a:bufNr
     silent execute 'tabn ' . s:curTabNr
     " Create blank buffer if ended up with unmodifiable buffer
     if !&modifiable
@@ -87,7 +87,7 @@ function! s:DeleteBufPreservingSplit(bufNr, bufDeleteCmd)
     " Create new buffer empty if no splits and delete curBuf
     silent execute 'enew'
     call s:ShiftAllWindowsBufferPointingToBuffer(a:bufNr)
-    silent execute a:bufNr . a:bufDeleteCmd
+    execute a:bufNr . a:bufDeleteCmd
   endif
 endfunction
 
@@ -97,7 +97,7 @@ function! s:CloseDiffBuffers()
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
-      execute bufwinnr(bufNr) . 'wincmd w | bd'
+      silent execute bufwinnr(bufNr) . 'wincmd w | bd'
     endif
   endfor
 endfunction
@@ -135,7 +135,7 @@ function! smartq#wipe_empty_buffers() abort
   let buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val)<0 && !getbufvar(v:val, "&mod")')
   if !empty(buffers)
     " Wipe all empty buffers
-    execute 'bw! ' . join(buffers, ' ')
+    silent execute 'bw! ' . join(buffers, ' ')
   endif
 endfunction
 
@@ -151,13 +151,13 @@ function! smartq#close_all_modifiable_splits() abort
       endif
       silent execute "wincmd w"
     endfor
-    echo "splits closed " . s:splitsClosed
     return s:splitsClosed
   endif
 endfunction
 
 
 function! smartq#smartq() abort
+  " Exit if filetype excluded
   if index(g:smartq_exclude_filetypes, &filetype) >= 0
     return
   endif
@@ -175,33 +175,45 @@ function! smartq#smartq() abort
   let s:bwFiletypes = join(g:smartq_bw_filetypes, '\|')
   let s:qFiletypes = join(g:smartq_q_filetypes, '\|')
 
+  let s:splitCount = s:CountAllModifiableSplitsWithExclusion()
+
   " Store listed buffers count
   let s:curBufCount = len(getbufinfo({'buflisted':1}))
 
   if &buftype ==# 'terminal'
     silent execute 'bw!'
+
   elseif &diff
     call s:CloseDiffBuffers()
+
   elseif exists("#goyo")
     call s:CloseGoyoBuffer()
-  elseif s:curBufCount ==# 1 && s:CountAllModifiableSplitsWithExclusion() > 1
-    echomsg "Closing all splits"
-    " Close all splits if exists, else quit vim
+
+  elseif s:splitCount ># 1 && s:curBufCount ==# 1 && s:curBufName ==# ''
     call smartq#close_all_modifiable_splits()
-  elseif s:curBufCount ==# 1 && s:CountAllModifiableSplitsWithExclusion() ==# 1 && s:curBufName ==# ''
-    echomsg "Quitting"
-    silent execute 'qa!'
+
+  elseif s:splitCount ==# 1 && s:curBufCount ==# 1 && s:curBufName ==# ''
+    silent execute 'q'
+
+  elseif s:splitCount ==# 1 && tabpagenr('$') > 1
+    if s:bwFiletypes =~ &filetype
+      execute 'bw' . s:curBufNr
+    else
+      execute 'bd' . s:curBufNr
+    endif
+
   elseif s:bdFiletypes =~ &filetype
-    echomsg "deleting with bd"
     call s:DeleteBufPreservingSplit(s:curBufNr, 'bd')
+
   elseif s:bwFiletypes =~ &filetype
-    echomsg "deleting with bw"
     call s:DeleteBufPreservingSplit(s:curBufNr, 'bw')
+
   elseif s:qFiletypes =~ &filetype || (!&modifiable || &readonly)
     silent execute 'q'
+
   else
-    echomsg "else, deleting with bd"
     call s:DeleteBufPreservingSplit(s:curBufNr, 'bd')
+
   endif
 endfunction
 
