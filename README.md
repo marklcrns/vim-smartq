@@ -59,10 +59,11 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 ## Mappings
 
 ```vim
-nmap <Plug>(smartq_this)           " :SmartQ
-nmap <Plug>(smartq_this_force)     " :SmartQ!
-nmap <Plug>(smartq_wipe_empty)     " :SmartQWipeEmpty
-nmap <Plug>(smartq_close_splits)   " :SmartQCloseSplits
+nmap <Plug>(smartq_this)              " :SmartQ
+nmap <Plug>(smartq_this_force)        " :SmartQ!
+nmap <Plug>(smartq_wipe_empty)        " :SmartQWipeEmpty
+nmap <Plug>(smartq_wipe_empty_force)  " :SmartQWipeEmpty!
+nmap <Plug>(smartq_close_splits)      " :SmartQCloseSplits
 ```
 
 ## Customization
