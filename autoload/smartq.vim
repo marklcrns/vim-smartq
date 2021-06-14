@@ -1,4 +1,5 @@
-" File: smartq.vim
+" smartq.vim
+" Version: 1.0
 "
 " Description:
 "   Sensibly close buffers with respect to alternate tabs and window splits,
