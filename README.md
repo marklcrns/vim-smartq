@@ -86,7 +86,7 @@ let g:smartq_exclude_filetypes = [
       \ ]
 " Quit buffers using :q command. Non-modifiable and readonly file uses :q
 let g:smartq_q_filetypes = [
-      \ 'git', 'gina-status', 'gina-commit', 'diff'
+      \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit'
       \ ]
 " Wipe buffers using :bw command. Wiped buffers are removed from jumplist
 " Default :bd

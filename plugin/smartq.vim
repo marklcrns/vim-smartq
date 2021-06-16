@@ -12,7 +12,7 @@ endif
 " Quit buffers using :q command. Non-modifiable and readonly file uses :q
 if !exists('g:smartq_q_filetypes')
   let g:smartq_q_filetypes = [
-        \ 'git', 'gina-status', 'gina-commit', 'diff'
+        \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit'
         \ ]
 endif
 
