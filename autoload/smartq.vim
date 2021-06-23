@@ -24,7 +24,7 @@
 " Date:
 "   2021-06-12
 " Licence:
-"   GPL3
+"   MIT
 "
 " Credits:
 "   smartq#smartq()
