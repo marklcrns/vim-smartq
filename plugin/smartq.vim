@@ -1,29 +1,46 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" Excluded filetypes to disable SmartQ and to preserve windows when closing
-" splits on excluded buffers. Non-modifiable are preserved by default.
+" Global variables
 if !exists('g:smartq_exclude_filetypes')
   let g:smartq_exclude_filetypes = [
         \ 'fugitive'
         \ ]
 endif
 
-" Quit buffers using :q command. Non-modifiable and readonly file uses :q
-if !exists('g:smartq_q_filetypes')
-  let g:smartq_q_filetypes = [
-        \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit'
+if !exists('g:smartq_exclude_buftypes')
+  let g:smartq_exclude_buftypes= [
+        \ ''
         \ ]
 endif
 
-" Wipe buffers using :bw command. Wiped buffers are removed from jumplist
-" Default :bd
+if !exists('g:smartq_q_filetypes')
+  let g:smartq_q_filetypes = [
+        \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
+        \ 'floaterm'
+        \ ]
+endif
+
+if !exists('g:smartq_q_buftypes')
+  let g:smartq_q_buftypes = [
+        \ 'terminal', 'nofile'
+        \ ]
+endif
+
 if !exists('g:smartq_bw_filetypes')
   let g:smartq_bw_filetypes = [
         \ ''
         \ ]
 endif
 
+if !exists('g:smartq_bw_buftypes')
+  let g:smartq_bw_buftypes = [
+        \ ''
+        \ ]
+endif
+
+
+" SmartQ commands
 if !exists(':SmartQ')
   command! -bang -complete=buffer -nargs=? SmartQ
         \ call smartq#smartq(<q-bang>, <q-args>)
@@ -31,13 +48,15 @@ endif
 
 if !exists('SmartQWipeEmpty')
   command! -bang -nargs=0 SmartQWipeEmpty
-        \ call smartq#wipe_empty_buffers(<q-bang>)
+        \ call smartq#wipe_empty_bufs(<q-bang>)
 endif
 
 if !exists('SmartQCloseSplits')
-  command! -nargs=0 SmartQCloseSplits call smartq#close_all_modifiable_splits()
+  command! -nargs=0 SmartQCloseSplits call smartq#close_mod_splits()
 endif
 
+
+" Default mappings
 nnoremap <silent>   <Plug>(smartq_this)               :<C-u>SmartQ<CR>
 nnoremap <silent>   <Plug>(smartq_this_force)         :<C-u>SmartQ!<CR>
 nnoremap <silent>   <Plug>(smartq_wipe_empty)         :<C-u>SmartQWipeEmpty<CR>

@@ -79,18 +79,30 @@ nmap <Plug>(smartq_close_splits)      " :SmartQCloseSplits
 " nmap <C-q>    <Plug>(smartq_this_force)
 let g:smartq_default_mappings = 1
 
-" Excluded filetypes to disable SmartQ and to preserve windows when closing
-" splits on excluded buffers. Non-modifiable are preserved by default.
+" Excluded buffers to disable SmartQ and to preserve windows when closing splits
+" on excluded buffers. Non-modifiable are preserved by default.
 let g:smartq_exclude_filetypes = [
       \ 'fugitive'
       \ ]
+let g:smartq_exclude_buftypes= [
+      \ ''
+      \ ]
+
 " Quit buffers using :q command. Non-modifiable and readonly file uses :q
 let g:smartq_q_filetypes = [
-      \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit'
+      \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
+      \ 'floaterm'
       \ ]
+let g:smartq_q_buftypes = [
+      \ 'terminal', 'nofile'
+      \ ]
+
 " Wipe buffers using :bw command. Wiped buffers are removed from jumplist
 " Default :bd
 let g:smartq_bw_filetypes = [
+      \ ''
+      \ ]
+let g:smartq_bw_buftypes = [
       \ ''
       \ ]
 ```

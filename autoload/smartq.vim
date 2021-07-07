@@ -10,6 +10,7 @@
 "   - Keep tabs and window splits open with an empty buffer if pointing to
 "     same buffer to be deleted.
 "   - Prevents from deleting buffer if modified or in g:smartq_exclude_filetypes
+"     and g:smartq_exclude_buftypes
 "   - Handles diff splits, closing all diff buffer windows automatically.
 "   - Goyo integration. Remain in Goyo tab when deleting buffers. Exists if only
 "     one buffer remains.
@@ -46,7 +47,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 
-function! s:shift_all_win_buf_pointing_to_cur_buf(buffer)
+function! s:shift_win_buf_pointing_to_cur_buf(buffer)
   for i in range(1, tabpagenr('$'))
     silent execute 'tabnext ' . i
     if winnr('$') ># 1
@@ -87,7 +88,7 @@ function! s:new_tmp_buf(bang)
 endfunction
 
 
-function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
+function! s:del_buf(bufNr, bufDeleteCmd, bang)
   let curTabNr = tabpagenr()
   let command = a:bufDeleteCmd . a:bang . ' '
 
@@ -97,7 +98,7 @@ function! s:delete_buf_preserve_split(bufNr, bufDeleteCmd, bang)
   if bufCount ># 1
     " Prevent tabs and windows from closing if pointing to the same curBuf
     " by switching to next buffer before deleting curBuf
-    call s:shift_all_win_buf_pointing_to_cur_buf(a:bufNr)
+    call s:shift_win_buf_pointing_to_cur_buf(a:bufNr)
 
     " Close buffer and restore active tab
     execute command . a:bufNr
@@ -113,7 +114,7 @@ endfunction
 
 
 " Quit all diff buffers
-function! s:close_diff_bufs(bang) abort
+function! s:close_diff_bufs(bang)
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
@@ -125,22 +126,25 @@ endfunction
 
 " Hacky workaround to delete buffer while in Goyo mode without exiting or
 " to turn off Goyo mode when only one buffer exists
-function! s:delete_goyo_buf(bang) abort
+function! s:del_goyo_buf(bang) abort
   let bufCount = len(getbufinfo({'buflisted':1}))
   if bufCount ># 1
     execute 'bn | ' . 'bd' . a:bang . '#'
   else
     execute 'q' . a:bang . ' | bn'
-    call smartq#wipe_empty_buffers('!')
+    call smartq#wipe_empty_bufs('!')
   endif
 endfunction
 
 
-function! s:count_all_modifiable_splits_with_exclusion()
+" Count all modifiable splits excluding given filetype and buftype list
+function! s:count_mod_splits()
   let splitsCount = 0
   if winnr('$') ># 1
     for _ in range(1, winnr('$'))
-      if index(g:smartq_exclude_filetypes, &filetype) < 0 && &modifiable
+      if &modifiable
+            \ && index(g:smartq_exclude_filetypes, &filetype) < 0
+            \ && index(g:smartq_exclude_buftypes, &buftype) < 0
         let splitsCount += 1
       endif
       silent execute "wincmd w"
@@ -152,20 +156,51 @@ function! s:count_all_modifiable_splits_with_exclusion()
 endfunction
 
 
-function! smartq#wipe_empty_buffers(bang)
-  let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) > 0')
-  if !empty(emtpyBufs)
-    execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
+function! s:is_buf_excl()
+  let filetype = &filetype
+  let buftype = &buftype
+  if (filetype !=# '' && index(g:smartq_exclude_filetypes, filetype) >=# 0)
+        \ || (buftype !=# '' && index(g:smartq_exclude_buftypes, buftype) >=# 0)
+    return 1
+  else
+    return 0
   endif
 endfunction
 
 
-" Close all modifiable splits excluding given filetype list
-function! smartq#close_all_modifiable_splits()
+function! s:is_buf_q()
+  let filetype = &filetype
+  let buftype = &buftype
+  if (filetype !=# '' && index(g:smartq_q_filetypes, filetype) >=# 0)
+        \ || (buftype !=# '' && index(g:smartq_q_buftypes, buftype) >=# 0)
+        \ || !&modifiable || &readonly
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+
+function! s:is_buf_bw()
+  let filetype = &filetype
+  let buftype = &buftype
+  if (filetype !=# '' && index(g:smartq_bw_filetypes, filetype) >=# 0)
+        \ || (buftype !=# '' && index(g:smartq_bw_buftypes, buftype) >=# 0)
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+
+" Close all modifiable splits excluding given filetype and buftype list
+function! smartq#close_mod_splits()
   let splitsClosed = 0
-  if s:count_all_modifiable_splits_with_exclusion() ># 1
+  if s:count_mod_splits() ># 1
     for _ in range(1, winnr('$') - 1)
-      if index(g:smartq_exclude_filetypes, &filetype) < 0 && &modifiable
+      if &modifiable
+            \ && index(g:smartq_exclude_filetypes, &filetype) < 0
+            \ && index(g:smartq_exclude_buftypes, &buftype) < 0
         silent execute "close!"
         let splitsClosed += 1
       endif
@@ -176,9 +211,17 @@ function! smartq#close_all_modifiable_splits()
 endfunction
 
 
+function! smartq#wipe_empty_bufs(bang)
+  let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) > 0')
+  if !empty(emtpyBufs)
+    execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
+  endif
+endfunction
+
+
 function! smartq#smartq(bang, buffer) abort
   " Exit if filetype excluded
-  if index(g:smartq_exclude_filetypes, &filetype) >= 0
+  if s:is_buf_excl()
     return
   endif
 
@@ -191,49 +234,34 @@ function! smartq#smartq(bang, buffer) abort
     return
   endif
 
-  let splitCount = s:count_all_modifiable_splits_with_exclusion()
+  let splitCount = s:count_mod_splits()
+  let bang = &buftype ==# 'terminal' ? '!' : a:bang
 
-  let qFiletypes = join(g:smartq_q_filetypes, '\|')
-  let bwFiletypes = join(g:smartq_bw_filetypes, '\|')
-
-  " Store listed buffers count
+  " Listed buffers
   let bufCount = len(getbufinfo({'buflisted':1}))
 
-  if &buftype ==# 'terminal'
-    silent execute 'bw!'
-
-  elseif &diff
-    call s:close_diff_bufs(a:bang)
-
-  elseif exists("#goyo")
-    call s:delete_goyo_buf(a:bang)
-
-  elseif splitCount ># 1
+  if &diff                                        " Diff
+    call s:close_diff_bufs(bang)
+  elseif exists("#goyo")                          " Goyo
+    call s:del_goyo_buf(bang)
+  elseif splitCount ># 1                          " Split > 1
         \ && bufCount ==# 1 && bufName ==# ''
-    call smartq#close_all_modifiable_splits()
-
-  elseif splitCount ==# 1
+    call smartq#close_mod_splits()
+  elseif splitCount ==# 1                         " Split = 1
         \ && bufCount ==# 1 && bufName ==# ''
-    execute 'q' . a:bang
-
-  elseif qFiletypes =~ &filetype
-        \ && !(bufName ==# '' && bufCount ># 1)
-        \ || !&modifiable || &readonly
-    execute 'q' . a:bang
-
-  elseif splitCount ==# 1 && tabpagenr('$') > 1
-    if bwFiletypes =~ &filetype
-      execute 'bw' . a:bang . bufNr
+    execute 'q' . bang
+  elseif s:is_buf_q()                             " q
+    execute 'q' . bang
+  elseif splitCount ==# 1 && tabpagenr('$') > 1   " Split = 1, Tab > 1
+    if s:is_buf_bw()
+      execute 'bw' . bang . bufNr
     else
-      execute 'bd' . a:bang . bufNr
+      execute 'bd' . bang . bufNr
     endif
-
-  elseif bwFiletypes =~ &filetype
-    call s:delete_buf_preserve_split(bufNr, 'bw', a:bang)
-
+  elseif s:is_buf_bw()                            " bw
+    call s:del_buf(bufNr, 'bw', bang)
   else
-    call s:delete_buf_preserve_split(bufNr, 'bd', a:bang)
-
+    call s:del_buf(bufNr, 'bd', bang)
   endif
 endfunction
 
