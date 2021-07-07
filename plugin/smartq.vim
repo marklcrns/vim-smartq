@@ -1,3 +1,13 @@
+" smartq.vim
+" Version: 1.2
+"
+" Author:
+"   Mark Lucernas <https://github.com/marklcrns>
+" Date:
+"   2021-06-12
+" Licence:
+"   MIT
+
 let s:save_cpo = &cpo
 set cpo&vim
 

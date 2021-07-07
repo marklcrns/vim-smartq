@@ -1,5 +1,5 @@
 " smartq.vim
-" Version: 1.1
+" Version: 1.2
 "
 " Description:
 "   Sensibly close buffers with respect to alternate tabs and window splits,
@@ -27,7 +27,7 @@
 " Licence:
 "   MIT
 "
-" Credits:
+" Refs:
 "   smartq#smartq()
 "     - https://github.com/cespare/vim-sbd
 "     - https://github.com/Asheq/close-buffers.vim
