@@ -21,9 +21,9 @@ Close all diff buffers
 
 Additional features
 
-- Close all splits in current tab when one empty buffer remaining with multiple
-  splits.
-- Close terminal.
+- Close all splits in current tab when one empty modifiable buffer remaining
+  with multiple splits.
+- Auto wipe empty buffers when deleting/wiping a buffer
 
 ## Installation
 
