@@ -49,8 +49,7 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 :SmartQ! {buffer}     " Same as above but forced
 :SmartQWipeEmpty      " Wipe all empty (untitled) buffers
 :SmartQWipeEmpty!     " Same as above but forced
-:SmartQCloseSplits    " Close all splits excluding non-modifiable
-                      " buffers and g:smartq_exclude_filetypes
+:SmartQCloseSplits    " Close all splits excluding non-modifiable buffers
 ```
 
 > Tip: SmartQ(!) accepts both buffer name and buffer number (see :buffers). Also
@@ -80,7 +79,7 @@ nmap <Plug>(smartq_close_splits)      " :SmartQCloseSplits
 let g:smartq_default_mappings = 1
 
 " Excluded buffers to disable SmartQ and to preserve windows when closing splits
-" on excluded buffers. Non-modifiable are preserved by default.
+" on excluded buffers. Non-modifiable buffers are preserved by default.
 let g:smartq_exclude_filetypes = [
       \ 'fugitive'
       \ ]
@@ -90,11 +89,11 @@ let g:smartq_exclude_buftypes= [
 
 " Quit buffers using :q command. Non-modifiable and readonly file uses :q
 let g:smartq_q_filetypes = [
-      \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
+      \ 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
       \ 'floaterm'
       \ ]
 let g:smartq_q_buftypes = [
-      \ 'terminal', 'nofile'
+      \ 'quickfix', 'terminal', 'nofile'
       \ ]
 
 " Wipe buffers using :bw command. Wiped buffers are removed from jumplist

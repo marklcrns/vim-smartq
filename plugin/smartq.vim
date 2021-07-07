@@ -16,14 +16,14 @@ endif
 
 if !exists('g:smartq_q_filetypes')
   let g:smartq_q_filetypes = [
-        \ 'list', 'qf', 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
+        \ 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
         \ 'floaterm'
         \ ]
 endif
 
 if !exists('g:smartq_q_buftypes')
   let g:smartq_q_buftypes = [
-        \ 'terminal', 'nofile'
+        \ 'quickfix', 'terminal', 'nofile'
         \ ]
 endif
 
