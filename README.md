@@ -45,8 +45,9 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 `<Plug>(smartq_this)` and `<C-q>` to `<Plug>(smartq_this_force)`
 
 ```vim
-:SmartQ {buffer}      " Smart quit (optional buffer arg)
+:SmartQ {buffer}      " Smart quit (buffer name/number, optional)
 :SmartQ! {buffer}     " Same as above but forced
+:SmartQSave {buffer}  " Smart save before quit (buffer name/number, optional)
 :SmartQWipeEmpty      " Wipe all empty (untitled) buffers
 :SmartQWipeEmpty!     " Same as above but forced
 :SmartQCloseSplits    " Close all splits excluding non-modifiable buffers
@@ -59,6 +60,7 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 
 ```vim
 nmap <Plug>(smartq_this)              " :SmartQ
+nmap <Plug>(smartq_this_save)         " :SmartQSave
 nmap <Plug>(smartq_this_force)        " :SmartQ!
 nmap <Plug>(smartq_wipe_empty)        " :SmartQWipeEmpty
 nmap <Plug>(smartq_wipe_empty_force)  " :SmartQWipeEmpty!
