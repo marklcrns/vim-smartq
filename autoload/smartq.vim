@@ -220,7 +220,7 @@ function! smartq#wipe_empty_bufs(bang)
 endfunction
 
 
-function! smartq#smartq(bang, buffer) abort
+function! smartq#smartq(bang, buffer, save) abort
   " Exit if filetype excluded
   if s:is_buf_excl()
     return
@@ -230,9 +230,27 @@ function! smartq#smartq(bang, buffer) abort
   let bufName = bufname(bufNr)
   let curTabNr = tabpagenr()
 
-  if getbufvar(bufNr, '&modified') == 1 && &confirm ==# 0 && empty(a:bang)
-    echohl WarningMsg | echo "Changes detected. Please save your file(s) (add ! to override)" | echohl None
-    return
+  " Save before quit
+  if getbufvar(bufNr, '&modified') == 1
+    if a:save ==# v:true
+      try
+        exec 'w' . a:bang . ' ' . bufName
+      catch E32
+        let newfile = input('New filename: ', getcwd() . '/', "file")
+        if isdirectory(newfile)
+          echohl WarningMsg | echo "\n" . newfile . ' is a directory!' | echohl None
+          return
+        endif
+        let dir=fnamemodify(newfile, ':h')
+        if !isdirectory(dir)
+          call mkdir(dir, 'p')
+        endif
+        exec 'w' . a:bang . ' ' . newfile
+      endtry
+    elseif &confirm ==# 0 && empty(a:bang)
+      echohl WarningMsg | echo 'Changes detected. Please save your file(s) (add ! to override)' | echohl None
+      return
+    endif
   endif
 
   let modSplitsCount = s:count_mod_splits()

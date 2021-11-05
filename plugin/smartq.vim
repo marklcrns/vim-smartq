@@ -53,7 +53,12 @@ endif
 " SmartQ commands
 if !exists(':SmartQ')
   command! -bang -complete=buffer -nargs=? SmartQ
-        \ call smartq#smartq(<q-bang>, <q-args>)
+        \ call smartq#smartq(<q-bang>, <q-args>, v:false)
+endif
+
+if !exists(':SmartQSave')
+  command! -bang -complete=buffer -nargs=? SmartQSave
+        \ call smartq#smartq(<q-bang>, <q-args>, v:true)
 endif
 
 if !exists('SmartQWipeEmpty')
@@ -68,6 +73,7 @@ endif
 
 " Default mappings
 nnoremap <silent>   <Plug>(smartq_this)               :<C-u>SmartQ<CR>
+nnoremap <silent>   <Plug>(smartq_this_save)          :<C-u>SmartQSave<CR>
 nnoremap <silent>   <Plug>(smartq_this_force)         :<C-u>SmartQ!<CR>
 nnoremap <silent>   <Plug>(smartq_wipe_empty)         :<C-u>SmartQWipeEmpty<CR>
 nnoremap <silent>   <Plug>(smartq_wipe_empty_force)   :<C-u>SmartQWipeEmpty!<CR>
