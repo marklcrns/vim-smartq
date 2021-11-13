@@ -95,7 +95,7 @@ let g:smartq_q_filetypes = [
       \ 'floaterm'
       \ ]
 let g:smartq_q_buftypes = [
-      \ 'quickfix', 'terminal', 'nofile'
+      \ 'quickfix', 'nofile'
       \ ]
 
 " Wipe buffers using :bw command. Wiped buffers are removed from jumplist

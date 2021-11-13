@@ -33,7 +33,7 @@ endif
 
 if !exists('g:smartq_q_buftypes')
   let g:smartq_q_buftypes = [
-        \ 'quickfix', 'terminal', 'nofile'
+        \ 'quickfix', 'nofile'
         \ ]
 endif
 

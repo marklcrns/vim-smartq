@@ -108,10 +108,13 @@ function! s:del_buf(bufNr, bufDeleteCmd, bang)
   let bufCount = len(getbufinfo({'buflisted':1}))
 
   " Prevent tabs and windows from closing if pointing to the same curBuf
-  call smartq#wipe_empty_bufs(a:bang)
-  call s:shift_win_buf_pointing_to_cur_buf(a:bufNr)
+  if getbufvar(a:bufNr, '&modifiable')
+    call s:shift_win_buf_pointing_to_cur_buf(a:bufNr)
+  endif
+
   execute command . a:bufNr
 
+  call smartq#wipe_empty_bufs(a:bang)
   if !&modifiable
     call s:new_tmp_buf('!')
   endif
@@ -190,13 +193,14 @@ endfunction
 function! s:is_buf_q()
   let filetype = &filetype
   let buftype = &buftype
-  if (filetype !=# '' && index(g:smartq_q_filetypes, filetype) >=# 0)
+  if buftype ==# 'terminal'
+    return 0
+  elseif (filetype !=# '' && index(g:smartq_q_filetypes, filetype) >=# 0)
         \ || (buftype !=# '' && index(g:smartq_q_buftypes, buftype) >=# 0)
         \ || !&modifiable || &readonly
     return 1
-  else
-    return 0
   endif
+  return 0
 endfunction
 
 
@@ -204,11 +208,60 @@ function! s:is_buf_bw()
   let filetype = &filetype
   let buftype = &buftype
   if (filetype !=# '' && index(g:smartq_bw_filetypes, filetype) >=# 0)
+        \ || buftype ==# 'terminal'
         \ || (buftype !=# '' && index(g:smartq_bw_buftypes, buftype) >=# 0)
     return 1
   else
     return 0
   endif
+endfunction
+
+function! s:echo_error(msg)
+  echohl WarningMsg | echom a:msg | echohl None
+endfunction
+
+function! s:confirm_prompt(msg)
+  echo a:msg . ' [y/n] '
+  let answer = nr2char(getchar())
+
+  if answer ==? 'y'
+    return 1
+  elseif answer ==? 'n'
+    return 0
+  elseif answer ==# ''
+    call s:echo_error('Aborted!')
+    return 0
+  else
+    echo 'Please enter "y" or "n"'
+    return s:confirm_prompt(a:msg)
+  endif
+endfunction
+
+function! s:save_buf(bang, bufName)
+  try
+    exec 'w' . a:bang . ' ' . a:bufName
+  " No file name
+  catch E32
+    let root = getcwd() . '/'
+    let newfile = input('New filename: ' . root, "", "file")
+
+    if empty(newfile)
+      call s:echo_error("\n[vim-smartq] " . "Saving buffer '" . a:bufName . "' aborted!")
+      return 1
+    elseif isdirectory(newfile)
+      call s:echo_error("\n[vim-smartq] " . newfile . ' is a directory!')
+      return 2
+    endif
+    let dir=fnamemodify(newfile, ':h')
+    if !isdirectory(dir)
+      call mkdir(dir, 'p')
+    endif
+    exec 'w' . a:bang . ' ' . newfile
+    return 0
+  endtry
+
+  call s:echo_error("\n[vim-smartq] " . "Error writting to buffer " . a:bufName . ' aborted!')
+  return 1
 endfunction
 
 
@@ -230,31 +283,27 @@ function! smartq#smartq(bang, buffer, save) abort
   let bufName = bufname(bufNr)
   let curTabNr = tabpagenr()
 
+  let modSplitsCount = s:count_mod_splits()
+  let bang = &buftype ==# 'terminal' ? '!' : a:bang
+
   " Save before quit
-  if getbufvar(bufNr, '&modified') == 1
+  if &modifiable && getbufvar(bufNr, '&modified') == 1
     if a:save ==# v:true
-      try
-        exec 'w' . a:bang . ' ' . bufName
-      catch E32
-        let newfile = input('New filename: ', getcwd() . '/', "file")
-        if isdirectory(newfile)
-          echohl WarningMsg | echo "\n" . newfile . ' is a directory!' | echohl None
+      let save = s:save_buf(a:bang, bufName)
+      if save ==# 1
+        return
+      elseif save ==# 2
+        if s:confirm_prompt('Buffer could not be saved, proceed quit?')
+          let bang = '!'
+        else
           return
         endif
-        let dir=fnamemodify(newfile, ':h')
-        if !isdirectory(dir)
-          call mkdir(dir, 'p')
-        endif
-        exec 'w' . a:bang . ' ' . newfile
-      endtry
+      endif
     elseif &confirm ==# 0 && empty(a:bang)
-      echohl WarningMsg | echo 'Changes detected. Please save your file(s) (add ! to override)' | echohl None
+      call s:echo_error('[vim-smartq] Changes detected. Please save your file(s) (add ! to override)')
       return
     endif
   endif
-
-  let modSplitsCount = s:count_mod_splits()
-  let bang = &buftype ==# 'terminal' ? '!' : a:bang
 
   " Listed buffers
   let bufCount = len(getbufinfo({'buflisted':1}))
