@@ -184,9 +184,8 @@ function! s:is_buf_excl()
   if (filetype !=# '' && index(g:smartq_exclude_filetypes, filetype) >=# 0)
         \ || (buftype !=# '' && index(g:smartq_exclude_buftypes, buftype) >=# 0)
     return 1
-  else
-    return 0
   endif
+  return 0
 endfunction
 
 
@@ -211,9 +210,16 @@ function! s:is_buf_bw()
         \ || buftype ==# 'terminal'
         \ || (buftype !=# '' && index(g:smartq_bw_buftypes, buftype) >=# 0)
     return 1
-  else
-    return 0
   endif
+  return 0
+endfunction
+
+function! s:is_floating(id) abort
+  if has('nvim')
+    let l:cfg = nvim_win_get_config(a:id)
+    return !empty(l:cfg.relative) || l:cfg.external
+  endif
+  return 0
 endfunction
 
 function! s:echo_error(msg)
@@ -276,6 +282,9 @@ endfunction
 function! smartq#smartq(bang, buffer, save) abort
   " Exit if filetype excluded
   if s:is_buf_excl()
+    return
+  elseif s:is_floating(0) " Neovim only
+    execute 'q'
     return
   endif
 
