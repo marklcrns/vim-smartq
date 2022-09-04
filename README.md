@@ -113,6 +113,14 @@ let g:smartq_auto_wipe_emtpy = 1
 let g:smartq_no_exit = 0
 " Automatically close splits when left with 1 modifiable buffer
 let g:smartq_auto_close_splits = 0
+
+" --- PLUGIN INTEGRATIONS
+" When a plugin is disabled, use built-in fallbacks
+
+" Enable Goyo
+let g:smartq_goyo_integration = 1
+" Enable Zen-mode
+let g:smartq_zenmode_integration = 1
 ```
 
 ## SmartQ Quit Prioritization
@@ -121,6 +129,7 @@ Ordered list of SmartQ quit conditions. Once `SmartQ` command is executed, it
 will find and **ONLY EXECUTE ONE** condition from the list below.
 
 1. **Delete** (`bd`) all `diff` buffers. Check: `:set diff?`
+2. **Delete** (`bd`) [Zen-mode](https://github.com/folke/zen-mode.nvim) buffer
 2. **Delete** (`bd`) [Goyo](https://github.com/junegunn/goyo.vim) buffer
 3. On final buffer
   i. **Close** (`close!`) all `modifiable` windows OR **Quit all** (`qa`) if empty buffer

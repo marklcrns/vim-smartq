@@ -378,11 +378,11 @@ function! smartq#smartq(bang, buffer, save) abort
     endif
   endif
 
-  " Plugin Integration
-  if s:is_zenmode_active()
+  " Plugin Integrations
+  if s:is_zenmode_active() && g:smartq_zenmode_integration
     call s:del_zenmode_buf(bang)
     return
-  elseif s:is_goyo_active()
+  elseif s:is_goyo_active() && g:smartq_goyo_integration
     call s:del_goyo_buf(bang)
     return
   endif
