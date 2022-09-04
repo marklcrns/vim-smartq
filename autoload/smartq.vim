@@ -137,14 +137,27 @@ endfunction
 
 " Hacky workaround to delete buffer while in Goyo mode without exiting and
 " to turn off Goyo mode when only one buffer exists
-function! s:del_goyo_buf(bang) abort
+function! s:del_goyo_buf(bang)
   let bufCount = len(getbufinfo({'buflisted':1}))
   if bufCount ># 1
     silent execute 'bn | ' . 'bd' . a:bang . '#'
   else
-    silent execute 'q' . a:bang . ' | bn'
-    call smartq#wipe_empty_bufs('!')
+    silent execute 'q' . a:bang
   endif
+  call smartq#wipe_empty_bufs('!')
+endfunction
+
+
+" Hacky workaround to delete buffer while in ZenMode without exiting and
+" to turn off Goyo mode when only one buffer exists
+function! s:del_zenmode_buf(bang)
+  let bufCount = len(getbufinfo({'buflisted':1}))
+  if bufCount ># 1
+    silent execute 'bn | ' . 'bd' . a:bang . '#'
+  else
+    silent execute 'q' . a:bang
+  endif
+  call smartq#wipe_empty_bufs('!')
 endfunction
 
 
@@ -156,6 +169,7 @@ function! s:count_mod_splits()
       if &modifiable
         let splitsCount += 1
       endif
+      " WARNING: toggles off ZenMode
       silent execute 'wincmd w'
     endfor
     return splitsCount
@@ -220,10 +234,22 @@ function! s:is_buf_bw()
   return 0
 endfunction
 
-function! s:is_floating(id) abort
+function! s:is_floating(id)
   if has('nvim')
     let l:cfg = nvim_win_get_config(a:id)
     return !empty(l:cfg.relative) || l:cfg.external
+  endif
+  return 0
+endfunction
+
+function! s:is_goyo_active()
+  return exists('#goyo')
+endfunction
+
+function! s:is_zenmode_active()
+  if has('nvim')
+    let is_active = execute("lua print(require('zen-mode.view').is_open())")
+    return stridx(is_active, 'true') !=# -1
   endif
   return 0
 endfunction
@@ -322,7 +348,7 @@ function! smartq#smartq(bang, buffer, save) abort
   " Exit if filetype excluded
   if s:is_buf_excl()
     return
-  elseif s:is_floating(0) " Neovim only
+  elseif s:is_floating(0) && !s:is_zenmode_active() " Neovim only
     silent execute 'q'
     return
   endif
@@ -331,7 +357,6 @@ function! smartq#smartq(bang, buffer, save) abort
   let bufName = bufname(bufNr)
   let curTabNr = tabpagenr()
 
-  let modSplitsCount = s:count_mod_splits()
   let bang = &buftype ==# 'terminal' ? '!' : a:bang
 
   " Save before quit
@@ -353,15 +378,22 @@ function! smartq#smartq(bang, buffer, save) abort
     endif
   endif
 
-  " Listed buffers
+  " Plugin Integration
+  if s:is_zenmode_active()
+    call s:del_zenmode_buf(bang)
+    return
+  elseif s:is_goyo_active()
+    call s:del_goyo_buf(bang)
+    return
+  endif
+
+  let modSplitsCount = s:count_mod_splits() " WARNING: toggles-off ZenMode
   let bufCount = len(getbufinfo({'buflisted':1}))
 
-  if &diff                                        " Diff
+  " Built-ins
+  if &diff
     call s:close_diff_bufs(bang)
-  elseif exists('#goyo')                          " Goyo
-    call s:del_goyo_buf(bang)
   elseif modSplitsCount ># 1 && bufCount ==# 1 && bufName ==# ''
-    " If close splits not successful, quit all
     if !smartq#close_mod_splits(bang)
       if g:smartq_no_exit ==# 0
         silent execute 'qa' . bang
@@ -375,9 +407,9 @@ function! smartq#smartq(bang, buffer, save) abort
     else
       call s:echo_msg('Exit prevented. Only one buffer left.', 0)
     endif
-  elseif s:is_buf_q()                             " q
+  elseif s:is_buf_q()
     silent execute 'q' . bang
-  elseif s:is_buf_bw()                            " bw
+  elseif s:is_buf_bw()
     call s:del_buf(bufNr, 'bw', bang)
   else
     call s:del_buf(bufNr, 'bd', bang)
