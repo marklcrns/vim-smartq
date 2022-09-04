@@ -106,7 +106,38 @@ let g:smartq_bw_filetypes = [
 let g:smartq_bw_buftypes = [
       \ ''
       \ ]
+
+" Automatically wipe empty (with no changes) buffer(s)
+let g:smartq_auto_wipe_emtpy = 1
+" Automatically close splits when left with an empty modifiable buffer
+let g:smartq_auto_close_splits = 1
+" Best attemp to prevent exiting editor when left with an empty modifiable buffer
+let g:smartq_no_exit = 0
 ```
+
+## SmartQ Quit Prioritization
+
+Ordered list of SmartQ quit conditions. Once `SmartQ` command is executed, it
+will find and **ONLY EXECUTE ONE** condition from the list below.
+
+1. **Delete** (`bd`) all `diff` buffers. Check: `:set diff?`
+2. **Delete** (`bd`) [Goyo](https://github.com/junegunn/goyo.vim) buffer
+3. On final buffer
+  i. **Close** (`close!`) all `modifiable` windows OR **Quit all** (`qa`) if empty buffer
+4. On final buffer with `nomodifiable` window(s)
+  i. **Quit all** (`qa`) if empty buffer
+5. **Quit** (`q`)
+  - `smartq_q_filetypes` or `smartq_q_buftypes`
+  - `terminal` buffer
+  - `nomodifiable` or `readonly` window
+  - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`, empty `filetype` and `buftype`
+5. **Wipe** (`bw`)
+  - `smartq_bw_filetypes` or `smartq_bw_buftypes`
+  - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`, empty `filetype` and `buftype`
+6. Catch all: **Delete** (`bd`) buffer. Check: `:buffers`
+
+See `diff`, `modifiable`, `filetype`, `buftype`, `buffers`
+
 
 ## Credits
 

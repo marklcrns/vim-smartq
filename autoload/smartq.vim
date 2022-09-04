@@ -84,7 +84,7 @@ endfunction
 
 function! s:str_to_bufnr(buffer)
   if empty(a:buffer)                " Current buffer
-    return bufnr("%")
+    return bufnr('%')
   elseif a:buffer =~# '^\d\+$'      " Str bufnr to bufnr
     return bufnr(str2nr(a:buffer))
   else                              " Bufname to bufnr
@@ -114,7 +114,10 @@ function! s:del_buf(bufNr, bufDeleteCmd, bang)
 
   silent execute command . a:bufNr
 
-  call smartq#wipe_empty_bufs(a:bang)
+  if bufCount ># 1 || g:smartq_auto_close_splits ==# 1
+    call smartq#wipe_empty_bufs(a:bang)
+  endif
+  " POSSIBLY UNREACHABLE: If left with non-modifiable buffer, create blank
   if !&modifiable
     call s:new_tmp_buf('!')
   endif
@@ -153,7 +156,7 @@ function! s:count_mod_splits()
       if &modifiable
         let splitsCount += 1
       endif
-      silent execute "wincmd w"
+      silent execute 'wincmd w'
     endfor
     return splitsCount
   endif
@@ -163,18 +166,21 @@ endfunction
 
 
 " Close all modifiable splits
-function! smartq#close_mod_splits()
-  let splitsClosed = 0
+function! smartq#close_mod_splits(bang)
+  if g:smartq_auto_close_splits ==# 0 && a:bang ==# ''
+    return
+  endif
+
   if s:count_mod_splits() ># 1
     for _ in range(1, winnr('$') - 1)
       if &modifiable
-        silent execute "close!"
-        let splitsClosed += 1
+        silent execute 'close!'
       endif
-      silent execute "wincmd w"
+      silent execute 'wincmd w'
     endfor
-    return splitsClosed
+    return 1
   endif
+  return 0
 endfunction
 
 
@@ -249,7 +255,7 @@ function! s:save_buf(bang, bufName)
   " No file name
   catch E32
     let root = getcwd() . '/'
-    let newfile = input('New filename: ' . root, "", "file")
+    let newfile = input('New filename: ' . root, '', 'file')
 
     if empty(newfile)
       call s:echo_error("\n[vim-smartq] " . "Saving buffer '" . a:bufName . "' aborted!")
@@ -266,16 +272,23 @@ function! s:save_buf(bang, bufName)
     return 0
   endtry
 
-  call s:echo_error("\n[vim-smartq] " . "Error writting to buffer " . a:bufName . ' aborted!')
+  call s:echo_error("\n[vim-smartq] " . 'Error writting to buffer ' . a:bufName . ' aborted!')
   return 1
 endfunction
 
 
 function! smartq#wipe_empty_bufs(bang)
+  if g:smartq_auto_wipe_emtpy ==# 0 && a:bang ==# ''
+    return 0
+  endif
+
   let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) > 0')
   if !empty(emtpyBufs)
     silent execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
+    return 1
   endif
+
+  return 0
 endfunction
 
 
@@ -319,12 +332,19 @@ function! smartq#smartq(bang, buffer, save) abort
 
   if &diff                                        " Diff
     call s:close_diff_bufs(bang)
-  elseif exists("#goyo")                          " Goyo
+  elseif exists('#goyo')                          " Goyo
     call s:del_goyo_buf(bang)
   elseif modSplitsCount ># 1 && bufCount ==# 1 && bufName ==# ''
-    call smartq#close_mod_splits()
+    " If not close splits not successful, quit all
+    if !smartq#close_mod_splits(bang)
+      if g:smartq_no_exit ==# 0
+        silent execute 'qa' . bang
+      endif
+    endif
   elseif modSplitsCount ==# 1 && bufCount ==# 1 && bufName ==# ''
-    silent execute 'qa' . bang
+    if g:smartq_no_exit ==# 0 || bang ==# '!'
+      silent execute 'qa' . bang
+    endif
   elseif s:is_buf_q()                             " q
     silent execute 'q' . bang
   elseif s:is_buf_bw()                            " bw
@@ -332,6 +352,8 @@ function! smartq#smartq(bang, buffer, save) abort
   else
     call s:del_buf(bufNr, 'bd', bang)
   endif
+
+  return
 endfunction
 
 let &cpo = s:save_cpo

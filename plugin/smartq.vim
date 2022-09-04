@@ -49,6 +49,17 @@ if !exists('g:smartq_bw_buftypes')
         \ ]
 endif
 
+if !exists('g:smartq_auto_wipe_emtpy')
+  let g:smartq_auto_wipe_emtpy = 1
+endif
+
+if !exists('g:smartq_auto_close_splits')
+  let g:smartq_auto_close_splits = 1
+endif
+
+if !exists('g:smartq_no_exit')
+  let g:smartq_no_exit = 0
+endif
 
 " SmartQ commands
 if !exists(':SmartQ')
@@ -67,7 +78,7 @@ if !exists('SmartQWipeEmpty')
 endif
 
 if !exists('SmartQCloseSplits')
-  command! -nargs=0 SmartQCloseSplits call smartq#close_mod_splits()
+  command! -nargs=0 SmartQCloseSplits call smartq#close_mod_splits('!')
 endif
 
 
