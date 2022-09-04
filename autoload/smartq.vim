@@ -68,7 +68,7 @@ function! s:shift_win_buf_pointing_to_cur_buf(bufNr)
         if len(getbufinfo({'buflisted':1})) ==# 1
           call s:new_tmp_buf('!')
         else
-          execute 'bnext'
+          silent execute 'bnext'
         endif
         " Restore active window
         silent execute curWin . 'wincmd w'
@@ -94,7 +94,7 @@ endfunction
 
 
 function! s:new_tmp_buf(bang)
-  execute 'enew' . a:bang
+  silent execute 'enew' . a:bang
   setl noswapfile
   setl bufhidden=wipe
   setl buftype=
@@ -112,7 +112,7 @@ function! s:del_buf(bufNr, bufDeleteCmd, bang)
     call s:shift_win_buf_pointing_to_cur_buf(a:bufNr)
   endif
 
-  execute command . a:bufNr
+  silent execute command . a:bufNr
 
   call smartq#wipe_empty_bufs(a:bang)
   if !&modifiable
@@ -126,7 +126,7 @@ function! s:close_diff_bufs(bang)
   for bufNr in range(1, bufnr('$'))
     if getwinvar(bufwinnr(bufNr), '&diff') == 1
       " Go to the diff buffer window and quit
-      execute bufwinnr(bufNr) . 'wincmd w | ' . 'bd' . a:bang
+      silent execute bufwinnr(bufNr) . 'wincmd w | ' . 'bd' . a:bang
     endif
   endfor
 endfunction
@@ -137,9 +137,9 @@ endfunction
 function! s:del_goyo_buf(bang) abort
   let bufCount = len(getbufinfo({'buflisted':1}))
   if bufCount ># 1
-    execute 'bn | ' . 'bd' . a:bang . '#'
+    silent execute 'bn | ' . 'bd' . a:bang . '#'
   else
-    execute 'q' . a:bang . ' | bn'
+    silent execute 'q' . a:bang . ' | bn'
     call smartq#wipe_empty_bufs('!')
   endif
 endfunction
@@ -274,7 +274,7 @@ endfunction
 function! smartq#wipe_empty_bufs(bang)
   let emtpyBufs = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) > 0')
   if !empty(emtpyBufs)
-    execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
+    silent execute 'bw' . a:bang . ' ' . join(emtpyBufs, ' ')
   endif
 endfunction
 
@@ -284,7 +284,7 @@ function! smartq#smartq(bang, buffer, save) abort
   if s:is_buf_excl()
     return
   elseif s:is_floating(0) " Neovim only
-    execute 'q'
+    silent execute 'q'
     return
   endif
 
@@ -324,9 +324,9 @@ function! smartq#smartq(bang, buffer, save) abort
   elseif modSplitsCount ># 1 && bufCount ==# 1 && bufName ==# ''
     call smartq#close_mod_splits()
   elseif modSplitsCount ==# 1 && bufCount ==# 1 && bufName ==# ''
-    execute 'qa' . bang
+    silent execute 'qa' . bang
   elseif s:is_buf_q()                             " q
-    execute 'q' . bang
+    silent execute 'q' . bang
   elseif s:is_buf_bw()                            " bw
     call s:del_buf(bufNr, 'bw', bang)
   else
