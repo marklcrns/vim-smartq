@@ -11,6 +11,10 @@ Preserve splits across tabs
 
 ![Preserve Splits](https://i.imgur.com/uKRWrjS.gif)
 
+[Zen-mode](https://github.com/folke/zen-mode.nvim) Integration
+
+![Zen-mode Integration](https://i.imgur.com/XuZZjaG.gif)
+
 [Goyo](https://github.com/junegunn/goyo.vim) Integration
 
 ![Goyo Integration](https://i.imgur.com/sB70XEK.gif)
