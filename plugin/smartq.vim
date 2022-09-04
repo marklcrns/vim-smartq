@@ -61,6 +61,14 @@ if !exists('g:smartq_auto_close_splits')
   let g:smartq_auto_close_splits = 0
 endif
 
+if !exists('g:smartq_goyo_integration')
+  let g:smartq_goyo_integration = 1
+endif
+
+if !exists('g:smartq_zenmode_integration')
+  let g:smartq_zenmode_integration = 1
+endif
+
 " SmartQ commands
 if !exists(':SmartQ')
   command! -bang -complete=buffer -nargs=? SmartQ
