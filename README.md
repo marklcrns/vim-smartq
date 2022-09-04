@@ -109,10 +109,10 @@ let g:smartq_bw_buftypes = [
 
 " Automatically wipe empty (with no changes) buffer(s)
 let g:smartq_auto_wipe_emtpy = 1
-" Automatically close splits when left with an empty modifiable buffer
-let g:smartq_auto_close_splits = 1
 " Best attemp to prevent exiting editor when left with an empty modifiable buffer
 let g:smartq_no_exit = 0
+" Automatically close splits when left with 1 modifiable buffer
+let g:smartq_auto_close_splits = 0
 ```
 
 ## SmartQ Quit Prioritization

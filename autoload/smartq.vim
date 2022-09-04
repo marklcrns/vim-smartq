@@ -228,12 +228,38 @@ function! s:is_floating(id) abort
   return 0
 endfunction
 
-function! s:echo_error(msg)
-  echohl WarningMsg | echom a:msg | echohl None
+function! s:echo_error(msg, newline)
+  let message = '[vim-smartq] ERROR: ' . a:msg
+
+  if a:newline ==# 1
+    message = '\n' . message
+  endif
+
+  echohl WarningMsg | echom message | echohl None
+endfunction
+
+function! s:echo_info(msg, newline)
+  let message = '[vim-smartq] INFO: ' . a:msg
+
+  if a:newline ==# 1
+    message = '\n' . message
+  endif
+
+  echom message
+endfunction
+
+function! s:echo_msg(msg, newline)
+  let message = '[vim-smartq]: ' . a:msg
+
+  if a:newline ==# 1
+    message = '\n' . message
+  endif
+
+  echo message
 endfunction
 
 function! s:confirm_prompt(msg)
-  echo a:msg . ' [y/n] '
+  call s:echo_msg(a:msg . ' [y/n] ', 0)
   let answer = nr2char(getchar())
 
   if answer ==? 'y'
@@ -241,7 +267,7 @@ function! s:confirm_prompt(msg)
   elseif answer ==? 'n'
     return 0
   elseif answer ==# ''
-    call s:echo_error('Aborted!')
+    call s:echo_error('Aborted!', 0)
     return 0
   else
     echo 'Please enter "y" or "n"'
@@ -258,10 +284,10 @@ function! s:save_buf(bang, bufName)
     let newfile = input('New filename: ' . root, '', 'file')
 
     if empty(newfile)
-      call s:echo_error("\n[vim-smartq] " . "Saving buffer '" . a:bufName . "' aborted!")
+      call s:echo_error("Saving buffer '" . a:bufName . "' aborted!", 1)
       return 1
     elseif isdirectory(newfile)
-      call s:echo_error("\n[vim-smartq] " . newfile . ' is a directory!')
+      call s:echo_error(newfile . ' is a directory!', 1)
       return 2
     endif
     let dir=fnamemodify(newfile, ':h')
@@ -272,7 +298,7 @@ function! s:save_buf(bang, bufName)
     return 0
   endtry
 
-  call s:echo_error("\n[vim-smartq] " . 'Error writting to buffer ' . a:bufName . ' aborted!')
+  call s:echo_error('Error writting to buffer ' . a:bufName . ' aborted!', 1)
   return 1
 endfunction
 
@@ -322,7 +348,7 @@ function! smartq#smartq(bang, buffer, save) abort
         endif
       endif
     elseif &confirm ==# 0 && empty(a:bang)
-      call s:echo_error('[vim-smartq] Changes detected. Please save your file(s) (add ! to override)')
+      call s:echo_error('Changes detected. Please save your file(s) (add ! to override)', 0)
       return
     endif
   endif
@@ -335,15 +361,19 @@ function! smartq#smartq(bang, buffer, save) abort
   elseif exists('#goyo')                          " Goyo
     call s:del_goyo_buf(bang)
   elseif modSplitsCount ># 1 && bufCount ==# 1 && bufName ==# ''
-    " If not close splits not successful, quit all
+    " If close splits not successful, quit all
     if !smartq#close_mod_splits(bang)
       if g:smartq_no_exit ==# 0
         silent execute 'qa' . bang
+      else
+        call s:echo_msg('Exit prevented. Only one buffer left.', 0)
       endif
     endif
   elseif modSplitsCount ==# 1 && bufCount ==# 1 && bufName ==# ''
     if g:smartq_no_exit ==# 0 || bang ==# '!'
       silent execute 'qa' . bang
+    else
+      call s:echo_msg('Exit prevented. Only one buffer left.', 0)
     endif
   elseif s:is_buf_q()                             " q
     silent execute 'q' . bang
