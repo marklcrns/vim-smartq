@@ -43,6 +43,8 @@ Using [dein](https://github.com/Shougo/dein.vim)
 call dein#add('marklcrns/vim-smartq')
 ```
 
+other package managers may be used as well.
+
 ## Usage
 
 Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
