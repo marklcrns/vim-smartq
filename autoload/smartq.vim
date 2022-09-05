@@ -248,7 +248,7 @@ endfunction
 
 function! s:is_zenmode_active()
   if has('nvim')
-    let is_active = execute("lua print(require('zen-mode.view').is_open())")
+    let is_active = execute("silent! lua print(require('zen-mode.view').is_open())")
     return stridx(is_active, 'true') !=# -1
   endif
   return 0
@@ -379,10 +379,10 @@ function! smartq#smartq(bang, buffer, save) abort
   endif
 
   " Plugin Integrations
-  if s:is_zenmode_active() && g:smartq_zenmode_integration
+  if g:smartq_zenmode_integration && s:is_zenmode_active()
     call s:del_zenmode_buf(bang)
     return
-  elseif s:is_goyo_active() && g:smartq_goyo_integration
+  elseif g:smartq_goyo_integration && s:is_goyo_active()
     call s:del_goyo_buf(bang)
     return
   endif
