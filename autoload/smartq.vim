@@ -393,6 +393,8 @@ function! smartq#smartq(bang, buffer, save) abort
   " Built-ins
   if &diff
     call s:close_diff_bufs(bang)
+  elseif s:is_buf_q()
+    silent execute 'q' . bang
   elseif modSplitsCount ># 1 && bufCount ==# 1 && bufName ==# ''
     if !smartq#close_mod_splits(bang)
       if g:smartq_no_exit ==# 0
@@ -407,8 +409,6 @@ function! smartq#smartq(bang, buffer, save) abort
     else
       call s:echo_msg('Exit prevented. Only one buffer left.', 0)
     endif
-  elseif s:is_buf_q()
-    silent execute 'q' . bang
   elseif s:is_buf_bw()
     call s:del_buf(bufNr, 'bw', bang)
   else
