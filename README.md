@@ -1,9 +1,9 @@
 # vim-smartq
 
-Master key for quitting vim buffers.
+A smarter quit command for Vim buffers.
 
-Exit/Delete buffer with respect to window splits and tabs, and other types of
-buffer.
+`vim-smartq` closes, deletes, or wipes the current buffer while preserving window
+splits, tabs, and special buffer behavior where possible.
 
 ## Features
 
@@ -23,11 +23,11 @@ Close all diff buffers
 
 ![Diff](https://i.imgur.com/qSTQfGl.gif)
 
-Additional features
+Additional features:
 
-- Close all splits in current tab when one empty modifiable buffer remaining
-  with multiple splits.
-- Auto wipe empty buffers when deleting/wiping a buffer
+- Close all splits in the current tab when only one empty modifiable buffer
+  remains across multiple splits.
+- Automatically wipe empty buffers after deleting or wiping a buffer.
 
 ## Installation
 
@@ -43,12 +43,13 @@ Using [dein](https://github.com/Shougo/dein.vim)
 call dein#add('marklcrns/vim-smartq')
 ```
 
-other package managers may be used as well.
+Other package managers may be used as well.
 
 ## Usage
 
-Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
-`<Plug>(smartq_this)` and `<C-q>` to `<Plug>(smartq_this_force)`
+By default, `vim-smartq` remaps Vim's macro recording key from `q` to `Q`, maps
+`q` to `<Plug>(smartq_this)`, and maps `<C-q>` to
+`<Plug>(smartq_this_force)`.
 
 ```vim
 :SmartQ {buffer}      " Smart quit (buffer name/number, optional)
@@ -59,8 +60,8 @@ Plug and play. Automatically remap macro record `q` to `Q`, then map `q` to
 :SmartQCloseSplits    " Close all splits excluding non-modifiable buffers
 ```
 
-> Tip: SmartQ(!) accepts both buffer name and buffer number (see :buffers). Also
-> supports tab completion.
+> Tip: `SmartQ` and `SmartQ!` accept a buffer name or buffer number
+> (see `:buffers`) and support tab completion.
 
 ## Mappings
 
@@ -95,7 +96,7 @@ let g:smartq_exclude_buftypes= [
       \ ''
       \ ]
 
-" Quit buffers using :q command. Non-modifiable and readonly file uses :q
+" Quit buffers using :q command. Non-modifiable and readonly buffers use :q
 let g:smartq_q_filetypes = [
       \ 'diff', 'git', 'gina-status', 'gina-commit', 'snippets',
       \ 'floaterm'
@@ -113,11 +114,11 @@ let g:smartq_bw_buftypes = [
       \ ''
       \ ]
 
-" Automatically wipe empty (with no changes) buffer(s)
+" Automatically wipe empty unchanged buffer(s)
 let g:smartq_auto_wipe_emtpy = 1
-" Best attemp to prevent exiting editor when left with an empty modifiable buffer
+" Best attempt to prevent exiting the editor when left with an empty modifiable buffer
 let g:smartq_no_exit = 0
-" Automatically close splits when left with 1 modifiable buffer
+" Automatically close splits when left with one modifiable buffer
 let g:smartq_auto_close_splits = 0
 
 " --- PLUGIN INTEGRATIONS
@@ -131,27 +132,29 @@ let g:smartq_zenmode_integration = 1
 
 ## SmartQ Quit Prioritization
 
-Ordered list of SmartQ quit conditions. Once `SmartQ` command is executed, it
-will find and **ONLY EXECUTE ONE** condition from the list below.
+SmartQ evaluates the conditions below in order and executes only the first
+matching action.
 
 1. **Delete** (`bd`) all `diff` buffers. Check: `:set diff?`
-2. **Delete** (`bd`) [Zen-mode](https://github.com/folke/zen-mode.nvim) buffer
-2. **Delete** (`bd`) [Goyo](https://github.com/junegunn/goyo.vim) buffer
-3. **Quit** (`q`)
-  - `smartq_q_filetypes` or `smartq_q_buftypes`
-  - `terminal` buffer
-  - `nomodifiable` or `readonly` window
-  - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`, empty `filetype` and `buftype`
-4. On final buffer
-  i. **Close** (`close!`) all `modifiable` windows OR **Quit all** (`qa`) if empty buffer
-5. On final buffer with `nomodifiable` window(s)
-  i. **Quit all** (`qa`) if empty buffer
-6. **Wipe** (`bw`)
-  - `smartq_bw_filetypes` or `smartq_bw_buftypes`
-  - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`, empty `filetype` and `buftype`
-7. Catch all: **Delete** (`bd`) buffer. Check: `:buffers`
+2. Handle [Zen-mode](https://github.com/folke/zen-mode.nvim) buffers.
+3. Handle [Goyo](https://github.com/junegunn/goyo.vim) buffers.
+4. **Quit** (`q`)
+   - `smartq_q_filetypes` or `smartq_q_buftypes`
+   - `nomodifiable` or `readonly` window
+   - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`,
+     empty `filetype`, and empty `buftype`
+5. On the final buffer
+   - **Close** (`close!`) all `modifiable` windows, or **Quit all** (`qa`)
+     when the buffer is empty.
+6. On the final buffer with `nomodifiable` window(s)
+   - **Quit all** (`qa`) when the buffer is empty.
+7. **Wipe** (`bw`)
+   - `smartq_bw_filetypes`, `smartq_bw_buftypes`, or `terminal` buffer
+   - Exceptions: `smartq_exclude_filetypes`, `smartq_exclude_buftypes`,
+     empty `filetype`, and empty `buftype`
+8. Catch all: **Delete** (`bd`) buffer. Check: `:buffers`
 
-See `diff`, `modifiable`, `filetype`, `buftype`, `buffers`
+See `diff`, `modifiable`, `filetype`, `buftype`, and `buffers`.
 
 
 ## Credits
@@ -159,4 +162,3 @@ See `diff`, `modifiable`, `filetype`, `buftype`, `buffers`
 - [cespare/vim-sbd](https://github.com/cespare/vim-sbd)
 - [moll/vim-bbye](https://github.com/moll/vim-bbye)
 - [Asheq/close-buffers.vim](https://github.com/Asheq/close-buffers.vim)
-
