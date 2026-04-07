@@ -303,9 +303,9 @@ endfunction
 
 function! s:save_buf(bang, bufName)
   try
-    exec 'w' . a:bang . ' ' . a:bufName
+    silent execute 'w' . a:bang . ' ' . a:bufName
   " No file name
-  catch E32
+  catch /E32:/
     let root = getcwd() . '/'
     let newfile = input('New filename: ' . root, '', 'file')
 
@@ -320,12 +320,10 @@ function! s:save_buf(bang, bufName)
     if !isdirectory(dir)
       call mkdir(dir, 'p')
     endif
-    exec 'w' . a:bang . ' ' . newfile
-    return 0
+    silent execute 'w' . a:bang . ' ' . newfile
   endtry
 
-  call s:echo_error('Error writting to buffer ' . a:bufName . ' aborted!', 1)
-  return 1
+  return 0
 endfunction
 
 
@@ -363,6 +361,7 @@ function! smartq#smartq(bang, buffer, save) abort
   if &modifiable && getbufvar(bufNr, '&modified') == 1
     if a:save ==# v:true
       let save = s:save_buf(a:bang, bufName)
+      let bufName = bufname(bufNr)
       if save ==# 1
         return
       elseif save ==# 2
