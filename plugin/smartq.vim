@@ -1,5 +1,5 @@
 " smartq.vim
-" Version: 1.4
+" Version: 1.4.2
 "
 " Author:
 "   Mark Lucernas <https://github.com/marklcrns>

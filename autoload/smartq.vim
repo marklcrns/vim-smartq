@@ -1,5 +1,5 @@
 " smartq.vim
-" Version: 1.4
+" Version: 1.4.2
 "
 " Description:
 "   Sensibly close buffers with respect to alternate tabs and window splits,
@@ -112,7 +112,11 @@ function! s:del_buf(bufNr, bufDeleteCmd, bang)
     call s:shift_win_buf_pointing_to_cur_buf(a:bufNr)
   endif
 
-  silent execute command . a:bufNr
+  if &confirm && empty(a:bang) && getbufvar(a:bufNr, '&modified')
+    unsilent execute command . a:bufNr
+  else
+    silent execute command . a:bufNr
+  endif
 
   if bufCount ># 1 || g:smartq_auto_close_splits ==# 1
     call smartq#wipe_empty_bufs(a:bang)
@@ -419,4 +423,3 @@ endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
-
